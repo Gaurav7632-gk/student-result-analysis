@@ -1,4 +1,4 @@
-# UniResult — Result Sheet Generator
+# Student Marks Analysis — Result Sheet Generator
 
 A full-stack web application for generating, managing, and saving student result sheets. Built with React + TypeScript (frontend), Flask + PostgreSQL (backend).
 

@@ -4,42 +4,53 @@
 
 @layer base {
   :root {
-    --background: 220 30% 97%;
-    --foreground: 224 50% 12%;
+    /* Modern Educational Background - Subtle & Professional */
+    --background: 240 50% 98%;
+    --foreground: 220 30% 15%;
 
+    /* Enhanced Card Design */
     --card: 0 0% 100%;
-    --card-foreground: 224 50% 12%;
+    --card-foreground: 220 30% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 224 50% 12%;
+    --popover-foreground: 220 30% 15%;
 
-    --primary: 230 65% 52%;
+    /* Modern Blue to Purple Gradient Primary */
+    --primary: 220 90% 56%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 30% 93%;
-    --secondary-foreground: 224 50% 12%;
+    /* Fresh Teal Secondary */
+    --secondary: 180 70% 48%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 20% 94%;
-    --muted-foreground: 220 15% 46%;
+    /* Subtle Muted */
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 20% 45%;
 
-    --accent: 230 50% 94%;
-    --accent-foreground: 230 65% 35%;
+    /* Vibrant Accent - Emerald */
+    --accent: 145 80% 42%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 55%;
+    /* Bright Destructive */
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 152 60% 42%;
+    /* Vibrant Success */
+    --success: 145 85% 45%;
     --success-foreground: 0 0% 100%;
 
+    /* Warm Warning */
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
-    --border: 220 20% 88%;
-    --input: 220 20% 88%;
-    --ring: 230 65% 52%;
+    /* Enhanced Borders */
+    --border: 220 20% 92%;
+    --input: 220 20% 96%;
+    --ring: 220 90% 56%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
+    /* Sidebar */
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -48,45 +59,52 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Custom Colors for Enhanced Design */
+    --gradient-start: 220 90% 56%;
+    --gradient-end: 280 85% 50%;
+    --glass-bg: rgba(255, 255, 255, 0.7);
   }
 
   .dark {
-    --background: 224 50% 6%;
+    --background: 220 30% 10%;
     --foreground: 220 20% 95%;
 
-    --card: 224 40% 10%;
+    --card: 220 20% 14%;
     --card-foreground: 220 20% 95%;
 
-    --popover: 224 40% 10%;
+    --popover: 220 20% 14%;
     --popover-foreground: 220 20% 95%;
 
-    --primary: 230 65% 60%;
+    --primary: 260 80% 62%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 224 30% 18%;
-    --secondary-foreground: 220 20% 95%;
+    --secondary: 180 70% 55%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 224 20% 18%;
-    --muted-foreground: 220 15% 60%;
+    --muted: 220 14% 22%;
+    --muted-foreground: 220 15% 65%;
 
-    --accent: 230 40% 20%;
-    --accent-foreground: 230 60% 80%;
+    --accent: 145 80% 50%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 224 20% 20%;
-    --input: 224 20% 20%;
-    --ring: 230 65% 60%;
+    --border: 220 14% 20%;
+    --input: 220 14% 18%;
+    --ring: 260 80% 62%;
 
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary: 260 80% 62%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 260 80% 62%;
+
+    --glass-bg: rgba(30, 41, 59, 0.7);
   }
 }
 
@@ -96,5 +114,199 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Enhanced Animations */
+@layer utilities {
+  /* Fade in animation */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Slide up animation */
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Scale animation */
+  @keyframes popIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* Glow animation */
+  @keyframes glow {
+    0%, 100% {
+      text-shadow: 0 0 5px rgba(220, 90, 56, 0.5);
+    }
+    50% {
+      text-shadow: 0 0 20px rgba(220, 90, 56, 0.8);
+    }
+  }
+
+  /* Pulse animation */
+  @keyframes pulse-soft {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.5s ease-out;
+  }
+
+  .animate-slideUp {
+    animation: slideUp 0.6s ease-out;
+  }
+
+  .animate-popIn {
+    animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite;
+  }
+
+  .animate-pulse-soft {
+    animation: pulse-soft 2s ease-in-out infinite;
+  }
+
+  /* Enhanced gradient backgrounds */
+  .bg-gradient-primary {
+    @apply bg-gradient-to-br from-primary via-purple-500 to-pink-500;
+  }
+
+  .bg-gradient-success {
+    @apply bg-gradient-to-br from-green-400 to-emerald-600;
+  }
+
+  .bg-gradient-warning {
+    @apply bg-gradient-to-br from-amber-400 to-orange-500;
+  }
+
+  .bg-gradient-danger {
+    @apply bg-gradient-to-br from-red-400 to-rose-600;
+  }
+
+  /* Glassmorphism effect */
+  .glass {
+    @apply bg-white/50 backdrop-blur-xl border border-white/20 dark:bg-slate-900/30;
+  }
+
+  .glass-dark {
+    @apply bg-black/40 backdrop-blur-lg border border-white/10;
+  }
+
+  /* Enhanced shadows */
+  .shadow-lg-custom {
+    @apply shadow-lg hover:shadow-xl transition-shadow duration-300;
+  }
+
+  .shadow-xl-custom {
+    @apply shadow-2xl hover:shadow-2xl transition-shadow duration-300;
+  }
+
+  /* Icon wrapper styles */
+  .icon-wrapper {
+    @apply p-3 rounded-lg inline-flex items-center justify-center;
+  }
+
+  .icon-wrapper-primary {
+    @apply icon-wrapper bg-primary/10 text-primary;
+  }
+
+  .icon-wrapper-success {
+    @apply icon-wrapper bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400;
+  }
+
+  .icon-wrapper-warning {
+    @apply icon-wrapper bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400;
+  }
+
+  .icon-wrapper-danger {
+    @apply icon-wrapper bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400;
+  }
+
+  /* Better button states */
+  .btn-enhanced {
+    @apply relative inline-flex items-center justify-center overflow-hidden rounded-lg font-semibold transition-all duration-300;
+  }
+
+  .btn-enhanced-primary {
+    @apply btn-enhanced bg-gradient-to-r from-primary to-purple-600 text-white hover:shadow-lg hover:-translate-y-1 active:translate-y-0;
+  }
+
+  .btn-enhanced-secondary {
+    @apply btn-enhanced bg-gradient-to-r from-secondary to-teal-500 text-white hover:shadow-lg hover:-translate-y-1 active:translate-y-0;
+  }
+
+  /* Input enhancements */
+  .input-enhanced {
+    @apply bg-white/50 border-2 border-transparent hover:border-primary/20 focus:border-primary focus:bg-white focus:shadow-md dark:bg-slate-900/50 dark:hover:border-primary/30 dark:focus:bg-slate-900 transition-all;
+  }
+
+  /* Card enhancements */
+  .card-enhanced {
+    @apply rounded-2xl border border-white/40 bg-white/80 backdrop-blur-sm shadow-lg hover:shadow-xl hover:-translate-y-1 dark:bg-slate-900/50 dark:border-slate-700/40 transition-all duration-300;
+  }
+
+  /* Status badge */
+  .badge-success {
+    @apply bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300;
+  }
+
+  .badge-warning {
+    @apply bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300;
+  }
+
+  .badge-danger {
+    @apply bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300;
+  }
+
+  .badge-info {
+    @apply bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300;
+  }
+
+  /* Progress bar enhancement */
+  .progress-enhanced {
+    @apply h-2 rounded-full overflow-hidden bg-muted;
+  }
+
+  .progress-enhanced::before {
+    @apply content-[''] block h-full bg-gradient-to-r from-primary to-secondary rounded-full;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Selection styling */
+  ::selection {
+    @apply bg-primary/30 text-foreground;
   }
 }
