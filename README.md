@@ -41,10 +41,7 @@ my-result-sheet/
 
 | Layer | Technology |
 |-------|------------|
-| **Frontend** | React 18, TypeScript, Vite, Tailwind CSS, shadcn UI |
-| **Backend** | Python 3, Flask, Flask-CORS |
-| **Database** | PostgreSQL (psycopg2) |
-| **Optional** | Supabase (server-side auth with supabase-py) |
+| **Fronten se (server-side auth with supabase-py) |
 
 ---
 

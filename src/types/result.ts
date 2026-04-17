@@ -13,6 +13,7 @@ export interface StudentInfo {
   courseName: string;
   semester: number;
   academicYear: string;
+  email?: string;
 }
 
 export interface ResultData {

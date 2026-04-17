@@ -1,18 +1,28 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { GraduationCap, Plus, Trash2, FileText, History, Zap, CheckCircle, AlertCircle, Sparkles } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { GraduationCap, Plus, Trash2, FileText, History, Zap, CheckCircle, AlertCircle, Sparkles, Building2, BookA, AtSign, BookOpen, User, Hash } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { Subject, StudentInfo } from "@/types/result";
-import { createSubject, calculatePercentage, getResultStatus, getStatusColor, getStatusBg, isSubjectPass } from "@/lib/result-utils";
+import { createSubject, calculatePercentage, getResultStatus, isSubjectPass } from "@/lib/result-utils";
 import { cn } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
 
 const defaultSubjects = (): Subject[] =>
   Array.from({ length: 5 }, () => createSubject());
+
+const SUBJECT_PLACEHOLDERS = [
+  "Data Structures", 
+  "Operating Systems", 
+  "Computer Networks", 
+  "Database Management", 
+  "Software Engineering", 
+  "Discrete Mathematics"
+];
 
 const Index = () => {
   const navigate = useNavigate();
@@ -24,11 +34,48 @@ const Index = () => {
     courseName: "",
     semester: 1,
     academicYear: "",
+    email: "",
   });
   const [subjects, setSubjects] = useState<Subject[]>(defaultSubjects());
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   const updateStudent = (field: keyof StudentInfo, value: string | number) => {
     setStudent((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const updateTextOnly = (field: keyof StudentInfo, value: string) => {
+    updateStudent(field, value.replace(/[^a-zA-Z\s]/g, ""));
+  };
+
+  const updateCourseText = (field: keyof StudentInfo, value: string) => {
+    updateStudent(field, value.replace(/[^a-zA-Z\s.]/g, ""));
+  };
+
+  const updateNumberOnly = (field: keyof StudentInfo, value: string) => {
+    updateStudent(field, value.replace(/\D/g, ""));
+  };
+
+  const handleBlur = (field: string) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+  };
+
+  const getError = (field: string) => {
+    if (!touched[field]) return null;
+    
+    switch (field) {
+      case "name":
+        return student.name.trim().length < 3 ? "Name must be at least 3 characters" : null;
+      case "email":
+        return student.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(student.email) ? "Invalid email format" : null;
+      case "universityName":
+        return !student.universityName.trim() ? "Institution name is required" : null;
+      case "courseName":
+        return !student.courseName.trim() ? "Course program is required" : null;
+      case "academicYear":
+        return !student.academicYear.trim() ? "Academic session is required" : null;
+      default:
+        return null;
+    }
   };
 
   const updateSubject = (id: string, field: keyof Subject, value: string | number) => {
@@ -48,10 +95,11 @@ const Index = () => {
   const totalMax = subjects.reduce((s, sub) => s + sub.maxMarks, 0);
 
   const isFormValid =
-    student.name.trim() &&
+    student.name.trim().length >= 3 &&
     student.universityName.trim() &&
     student.courseName.trim() &&
     student.academicYear.trim() &&
+    (student.email ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(student.email) : true) &&
     validSubjects.length > 0 &&
     subjects.every((s) => !s.name.trim() || s.marksObtained <= s.maxMarks);
 
@@ -66,310 +114,347 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-purple-950">
-      {/* Enhanced Header with Glassmorphism */}
-      <header className="sticky top-0 z-20 border-b border-white/20 glass backdrop-blur-xl">
-        <div className="max-w-6xl mx-auto px-4 py-5 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="h-12 w-12 rounded-2xl icon-wrapper-primary shadow-lg">
-              <GraduationCap className="h-6 w-6" />
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 font-sans selection:bg-neutral-800 selection:text-white dark:selection:bg-neutral-200 dark:selection:text-neutral-900 pb-20">
+      {/* Top Navigation */}
+      <header className="sticky top-0 z-20 bg-white/80 dark:bg-neutral-950/80 backdrop-blur-md border-b border-neutral-200 dark:border-neutral-800">
+        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 p-2 rounded-md">
+              <GraduationCap className="h-5 w-5" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">Student Marks Analysis</h1>
-              <p className="text-sm text-muted-foreground font-medium">Smart Result Sheet Generator</p>
-            </div>
+            <span className="font-semibold text-lg tracking-tight">University Result Portal</span>
           </div>
           <Button 
-            variant="outline" 
+            variant="ghost" 
             size="sm" 
             onClick={() => navigate("/history")} 
-            className="gap-2 rounded-xl border-2 hover:border-primary/50 hover:bg-primary/5 transition-all hover:shadow-md hover:-translate-y-0.5"
+            className="text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
           >
-            <History className="h-4 w-4" /> History
+            <History className="h-4 w-4 mr-2" />
+            Records
           </Button>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-10 space-y-8 animate-slideUp">
-        {/* Welcome Info Card */}
-        <div className="card-enhanced p-6 border-l-4 border-l-primary">
-          <div className="flex items-start gap-3">
-            <Sparkles className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
-            <div>
-              <h2 className="text-lg font-bold text-foreground">Welcome to Student Marks Analysis!</h2>
-              <p className="text-sm text-muted-foreground mt-1">Generate beautiful, professional result sheets in seconds. Fill in your details below and watch the magic happen!</p>
-            </div>
-          </div>
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-12 space-y-12">
+        {/* Header Section */}
+        <div className="max-w-2xl space-y-2">
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-neutral-900 to-neutral-500 dark:from-white dark:to-neutral-400">
+            Create an academic result record
+          </h1>
+          <p className="text-neutral-500 dark:text-neutral-400 text-lg">
+            Fill out the student details and subject marks. A unified, perfectly scaled PDF will be generated instantly.
+          </p>
         </div>
 
-        {/* Student Details Card */}
-        <Card className="card-enhanced overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-primary/5 to-secondary/5 border-b border-primary/10 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="icon-wrapper-primary">
-                <FileText className="h-5 w-5" />
-              </div>
-              <CardTitle className="text-xl">👤 Student Information</CardTitle>
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">Complete your academic details to get started</p>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              <div className="space-y-2.5">
-                <Label htmlFor="name" className="text-sm font-semibold flex items-center gap-1">
-                  <span className="text-primary">*</span> Full Name
-                </Label>
-                <Input 
-                  id="name" 
-                  placeholder="John Doe" 
-                  value={student.name} 
-                  onChange={(e) => updateStudent("name", e.target.value)}
-                  className="input-enhanced text-sm"
-                />
-              </div>
-
-              <div className="space-y-2.5">
-                <Label htmlFor="roll" className="text-sm font-semibold">Roll Number</Label>
-                <Input 
-                  id="roll" 
-                  placeholder="2024001" 
-                  value={student.rollNumber} 
-                  onChange={(e) => updateStudent("rollNumber", e.target.value)}
-                  className="input-enhanced text-sm"
-                />
-              </div>
-
-              <div className="space-y-2.5">
-                <Label htmlFor="reg" className="text-sm font-semibold">Registration Number</Label>
-                <Input 
-                  id="reg" 
-                  placeholder="REG-2024-001" 
-                  value={student.registrationNumber} 
-                  onChange={(e) => updateStudent("registrationNumber", e.target.value)}
-                  className="input-enhanced text-sm"
-                />
-              </div>
-
-              <div className="space-y-2.5">
-                <Label htmlFor="uni" className="text-sm font-semibold flex items-center gap-1">
-                  <span className="text-primary">*</span> University / College
-                </Label>
-                <Input 
-                  id="uni" 
-                  placeholder="State University" 
-                  value={student.universityName} 
-                  onChange={(e) => updateStudent("universityName", e.target.value)}
-                  className="input-enhanced text-sm"
-                />
-              </div>
-
-              <div className="space-y-2.5">
-                <Label htmlFor="course" className="text-sm font-semibold flex items-center gap-1">
-                  <span className="text-primary">*</span> Course Name
-                </Label>
-                <Input 
-                  id="course" 
-                  placeholder="B.Tech CSE" 
-                  value={student.courseName} 
-                  onChange={(e) => updateStudent("courseName", e.target.value)}
-                  className="input-enhanced text-sm"
-                />
-              </div>
-
-              <div className="space-y-2.5">
-                <Label className="text-sm font-semibold">Semester</Label>
-                <Select value={String(student.semester)} onValueChange={(v) => updateStudent("semester", Number(v))}>
-                  <SelectTrigger className="input-enhanced">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 8 }, (_, i) => (
-                      <SelectItem key={i + 1} value={String(i + 1)}>
-                        Semester {i + 1}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2.5">
-                <Label htmlFor="year" className="text-sm font-semibold flex items-center gap-1">
-                  <span className="text-primary">*</span> Academic Year
-                </Label>
-                <Input 
-                  id="year" 
-                  placeholder="2025-26" 
-                  value={student.academicYear} 
-                  onChange={(e) => updateStudent("academicYear", e.target.value)}
-                  className="input-enhanced text-sm"
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Subjects Card */}
-        <Card className="card-enhanced overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-secondary/5 to-emerald-500/5 border-b border-secondary/10 pb-4 flex flex-row items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="icon-wrapper-success">
-                <Zap className="h-5 w-5" />
-              </div>
-              <CardTitle className="text-xl">📚 Subjects & Marks</CardTitle>
-            </div>
-            <Button 
-              size="sm" 
-              onClick={addSubject} 
-              className="gap-1.5 btn-enhanced-secondary hover:shadow-lg text-sm"
-            >
-              <Plus className="h-4 w-4" /> Add Subject
-            </Button>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="hidden md:grid grid-cols-[2fr_120px_120px_100px_40px] gap-3 text-xs font-bold text-muted-foreground px-2 pb-4 mb-4 border-b border-border/50">
-              <span>📖 Subject Name</span>
-              <span className="text-center">📊 Max Marks</span>
-              <span className="text-center">✏️ Obtained</span>
-              <span className="text-center">📈 Status</span>
-              <span />
-            </div>
-            <div className="space-y-3">
-              {subjects.map((sub, i) => {
-                const invalid = sub.name.trim() && sub.marksObtained > sub.maxMarks;
-                const pass = sub.name.trim() && sub.maxMarks > 0 ? isSubjectPass(sub) : null;
-                return (
-                  <div 
-                    key={sub.id} 
-                    className={cn(
-                      "grid grid-cols-1 md:grid-cols-[2fr_120px_120px_100px_40px] gap-3 items-center p-4 rounded-xl border-2 transition-all duration-300",
-                      invalid 
-                        ? "border-destructive/50 bg-red-50/30 dark:bg-red-950/10" 
-                        : "border-border/60 hover:border-primary/30 hover:bg-primary/5 dark:hover:bg-primary/10"
-                    )}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-muted-foreground bg-muted/60 px-2.5 py-1.5 rounded-lg">{i + 1}</span>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* Main Form Section - Takes up 8 cols on large screens */}
+          <div className="lg:col-span-8 space-y-8">
+            
+            {/* Student Details Card */}
+            <Card className="shadow-md hover:shadow-lg transition-shadow duration-500 border-neutral-200/60 dark:border-neutral-800 rounded-2xl bg-white/50 backdrop-blur-xl dark:bg-neutral-900/50">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-xl font-medium tracking-tight flex items-center gap-2">
+                  <User className="h-5 w-5 text-neutral-400" />
+                  Student Profile
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Name field */}
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                      Full Name <span className="text-red-500">*</span>
+                    </Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-2.5 h-4 w-4 text-neutral-400" />
                       <Input 
-                        placeholder={`Subject ${i + 1}`} 
-                        value={sub.name} 
-                        onChange={(e) => updateSubject(sub.id, "name", e.target.value)}
-                        className="input-enhanced text-sm"
+                        id="name" placeholder="Rahul Sharma" 
+                        value={student.name} 
+                        onChange={(e) => updateTextOnly("name", e.target.value)}
+                        onBlur={() => handleBlur("name")}
+                        className={cn("pl-9 bg-neutral-50/50 dark:bg-neutral-950 shadow-none h-10", getError("name") ? "border-red-500 focus-visible:ring-red-500" : "border-neutral-200 dark:border-neutral-800 focus-visible:ring-neutral-900")}
                       />
                     </div>
-                    <Input 
-                      type="number" 
-                      min={1} 
-                      value={sub.maxMarks} 
-                      onChange={(e) => updateSubject(sub.id, "maxMarks", Math.max(1, Number(e.target.value)))}
-                      className="input-enhanced text-sm text-center"
-                    />
-                    <Input 
-                      type="number" 
-                      min={0} 
-                      max={sub.maxMarks} 
-                      value={sub.marksObtained} 
-                      className={cn("input-enhanced text-sm text-center", invalid && "border-destructive")}
-                      onChange={(e) => updateSubject(sub.id, "marksObtained", Math.max(0, Number(e.target.value)))}
-                    />
-                    <div className="text-center">
-                      {pass === null ? (
-                        <span className="text-xs text-muted-foreground font-medium">—</span>
-                      ) : pass ? (
-                        <div className="flex items-center justify-center gap-1 badge-success px-3 py-1.5 rounded-lg w-fit mx-auto">
-                          <CheckCircle className="h-3.5 w-3.5" />
-                          <span className="text-xs font-bold">Pass</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-center gap-1 badge-danger px-3 py-1.5 rounded-lg w-fit mx-auto">
-                          <AlertCircle className="h-3.5 w-3.5" />
-                          <span className="text-xs font-bold">Fail</span>
-                        </div>
-                      )}
-                    </div>
-                    <Button 
-                      size="icon" 
-                      variant="ghost" 
-                      onClick={() => removeSubject(sub.id)} 
-                      className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-red-100/50 dark:hover:bg-red-950/30 rounded-lg transition-all"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    {getError("name") && <p className="text-xs text-red-500 font-medium animate-in fade-in slide-in-from-top-1">{getError("name")}</p>}
                   </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Live Summary Card with Enhanced Design */}
-        <Card className={cn(
-          "card-enhanced overflow-hidden border-2 transition-all duration-300",
-          status === "Pass" && "border-green-500/50 bg-gradient-to-br from-green-50/50 to-emerald-50/50 dark:from-green-950/20 dark:to-emerald-950/20",
-          status === "Fail" && "border-red-500/50 bg-gradient-to-br from-red-50/50 to-rose-50/50 dark:from-red-950/20 dark:to-rose-950/20",
-          status === "Distinction" && "border-purple-500/50 bg-gradient-to-br from-purple-50/50 to-pink-50/50 dark:from-purple-950/20 dark:to-pink-950/20",
-          !status && "border-blue-500/30"
-        )}>
-          <CardHeader className="pb-4 border-b border-current/10">
-            <div className="flex items-center gap-3">
-              <Zap className="h-5 w-5 text-primary animate-pulse-soft" />
-              <CardTitle className="text-lg">⚡ Live Summary</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="space-y-6">
-              {/* Marks Info */}
-              <div className="flex items-end justify-between gap-4">
-                <div className="flex-1">
-                  <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wide mb-2">Total Marks</p>
-                  <p className="text-3xl font-bold text-foreground">{totalObtained}/{totalMax}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wide mb-2">Performance</p>
-                  <p className="text-2xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-                    {percentage.toFixed(1)}%
-                  </p>
-                </div>
-              </div>
+                  {/* Email field */}
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                      Email Address
+                    </Label>
+                    <div className="relative">
+                      <AtSign className="absolute left-3 top-2.5 h-4 w-4 text-neutral-400" />
+                      <Input 
+                        id="email" type="email" placeholder="rahul@example.com"
+                        value={student.email || ""} 
+                        onChange={(e) => updateStudent("email", e.target.value)}
+                        onBlur={() => handleBlur("email")}
+                        className={cn("pl-9 bg-neutral-50/50 dark:bg-neutral-950 shadow-none h-10", getError("email") ? "border-red-500 focus-visible:ring-red-500" : "border-neutral-200 dark:border-neutral-800 focus-visible:ring-neutral-900")}
+                      />
+                    </div>
+                    {getError("email") && <p className="text-xs text-red-500 font-medium animate-in fade-in slide-in-from-top-1">{getError("email")}</p>}
+                  </div>
 
-              {/* Progress Bar */}
-              <div>
-                <Progress value={percentage} className="h-3 rounded-full" />
-                <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-                  <span>0%</span>
-                  <span>50%</span>
-                  <span>100%</span>
-                </div>
-              </div>
+                  {/* Roll Number */}
+                  <div className="space-y-2">
+                    <Label htmlFor="roll" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                      Roll Number
+                    </Label>
+                    <div className="relative">
+                      <Hash className="absolute left-3 top-2.5 h-4 w-4 text-neutral-400" />
+                      <Input 
+                        id="roll" placeholder="102938" 
+                        value={student.rollNumber} onChange={(e) => updateNumberOnly("rollNumber", e.target.value)}
+                        className="pl-9 bg-neutral-50/50 border-neutral-200 dark:bg-neutral-950 dark:border-neutral-800 focus-visible:ring-neutral-900 shadow-none h-10"
+                      />
+                    </div>
+                  </div>
 
-              {/* Status Badge */}
-              {status && (
-                <div className={cn(
-                  "flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-lg w-fit mx-auto",
-                  status === "Pass" && "badge-success",
-                  status === "Fail" && "badge-danger",
-                  status === "Distinction" && "badge-info"
-                )}>
-                  {status === "Pass" && <CheckCircle className="h-5 w-5" />}
-                  {status === "Fail" && <AlertCircle className="h-5 w-5" />}
-                  {status === "Distinction" && <Sparkles className="h-5 w-5" />}
-                  <span>{status.toUpperCase()}</span>
+                  {/* Registration Number */}
+                  <div className="space-y-2">
+                    <Label htmlFor="reg" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                      Registration Number
+                    </Label>
+                    <div className="relative">
+                      <FileText className="absolute left-3 top-2.5 h-4 w-4 text-neutral-400" />
+                      <Input 
+                        id="reg" placeholder="24001928" 
+                        value={student.registrationNumber} onChange={(e) => updateNumberOnly("registrationNumber", e.target.value)}
+                        className="pl-9 bg-neutral-50/50 border-neutral-200 dark:bg-neutral-950 dark:border-neutral-800 focus-visible:ring-neutral-900 shadow-none h-10"
+                      />
+                    </div>
+                  </div>
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Generate Button */}
-        <Button 
-          size="lg" 
-          className="w-full text-base font-bold h-14 rounded-xl btn-enhanced-primary hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed gap-2"
-          disabled={!isFormValid} 
-          onClick={handleGenerate}
-        >
-          <Sparkles className="h-5 w-5" />
-          Generate Result Sheet
-          <Sparkles className="h-5 w-5" />
-        </Button>
+                <Separator className="bg-neutral-100 dark:bg-neutral-800" />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* University */}
+                  <div className="space-y-2">
+                    <Label htmlFor="uni" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                      Institution Name <span className="text-red-500">*</span>
+                    </Label>
+                    <div className="relative">
+                      <Building2 className="absolute left-3 top-2.5 h-4 w-4 text-neutral-400" />
+                      <Input 
+                        id="uni" placeholder="Delhi University" 
+                        value={student.universityName} 
+                        onChange={(e) => updateTextOnly("universityName", e.target.value)}
+                        onBlur={() => handleBlur("universityName")}
+                        className={cn("pl-9 bg-neutral-50/50 dark:bg-neutral-950 shadow-none h-10", getError("universityName") ? "border-red-500 focus-visible:ring-red-500" : "border-neutral-200 dark:border-neutral-800 focus-visible:ring-neutral-900")}
+                      />
+                    </div>
+                    {getError("universityName") && <p className="text-xs text-red-500 font-medium animate-in fade-in slide-in-from-top-1">{getError("universityName")}</p>}
+                  </div>
+
+                  {/* Course */}
+                  <div className="space-y-2">
+                    <Label htmlFor="course" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                      Degree / Program <span className="text-red-500">*</span>
+                    </Label>
+                    <div className="relative">
+                      <GraduationCap className="absolute left-3 top-2.5 h-4 w-4 text-neutral-400" />
+                      <Input 
+                        id="course" placeholder="B.Tech Computer Science" 
+                        value={student.courseName} 
+                        onChange={(e) => updateCourseText("courseName", e.target.value)}
+                        onBlur={() => handleBlur("courseName")}
+                        className={cn("pl-9 bg-neutral-50/50 dark:bg-neutral-950 shadow-none h-10", getError("courseName") ? "border-red-500 focus-visible:ring-red-500" : "border-neutral-200 dark:border-neutral-800 focus-visible:ring-neutral-900")}
+                      />
+                    </div>
+                    {getError("courseName") && <p className="text-xs text-red-500 font-medium animate-in fade-in slide-in-from-top-1">{getError("courseName")}</p>}
+                  </div>
+                  
+                  {/* Semester */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Semester</Label>
+                    <Select value={String(student.semester)} onValueChange={(v) => updateStudent("semester", Number(v))}>
+                      <SelectTrigger className="bg-neutral-50/50 border-neutral-200 dark:bg-neutral-950 dark:border-neutral-800 shadow-none h-10 focus:ring-neutral-900">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 8 }, (_, i) => (
+                          <SelectItem key={i + 1} value={String(i + 1)}>Semester {i + 1}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Academic Year */}
+                  <div className="space-y-2">
+                    <Label htmlFor="year" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                      Academic Session <span className="text-red-500">*</span>
+                    </Label>
+                    <div className="relative">
+                      <BookOpen className="absolute left-3 top-2.5 h-4 w-4 text-neutral-400" />
+                      <Input 
+                        id="year" placeholder="2025-2026" 
+                        value={student.academicYear} 
+                        onChange={(e) => updateStudent("academicYear", e.target.value)}
+                        onBlur={() => handleBlur("academicYear")}
+                        className={cn("pl-9 bg-neutral-50/50 dark:bg-neutral-950 shadow-none h-10", getError("academicYear") ? "border-red-500 focus-visible:ring-red-500" : "border-neutral-200 dark:border-neutral-800 focus-visible:ring-neutral-900")}
+                      />
+                    </div>
+                    {getError("academicYear") && <p className="text-xs text-red-500 font-medium animate-in fade-in slide-in-from-top-1">{getError("academicYear")}</p>}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Academic Record Card */}
+            <Card className="shadow-md hover:shadow-lg transition-shadow duration-500 border-neutral-200/60 dark:border-neutral-800 rounded-2xl bg-white/50 backdrop-blur-xl dark:bg-neutral-900/50">
+              <CardHeader className="pb-4 flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-xl font-medium tracking-tight flex items-center gap-2">
+                    <BookA className="h-5 w-5 text-neutral-400" />
+                    Academic Record
+                  </CardTitle>
+                </div>
+                <Button 
+                  size="sm" variant="outline" onClick={addSubject} 
+                  className="rounded-md border-neutral-200 shadow-none hover:bg-neutral-100 h-8 text-xs font-medium"
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Add Subject
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="hidden md:grid grid-cols-[1fr_90px_90px_80px_40px] gap-4 mb-3 px-1">
+                  <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">Subject Title</span>
+                  <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider text-center">Max Marks</span>
+                  <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider text-center">Obtained</span>
+                  <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider text-center">Status</span>
+                  <span />
+                </div>
+                
+                <div className="space-y-3">
+                  {subjects.map((sub, i) => {
+                    const isNameInvalid = touched[`sub_name_${sub.id}`] && !sub.name.trim();
+                    const invalidMarks = touched[`sub_marks_${sub.id}`] && sub.marksObtained > sub.maxMarks;
+                    const pass = sub.name.trim() && sub.maxMarks > 0 ? isSubjectPass(sub) : null;
+                    const placeholderText = SUBJECT_PLACEHOLDERS[i % SUBJECT_PLACEHOLDERS.length];
+                    
+                    return (
+                      <div key={sub.id} className="space-y-1">
+                        <div 
+                          className={cn(
+                            "grid grid-cols-1 md:grid-cols-[1fr_90px_90px_80px_40px] gap-4 items-center pl-3 pr-2 py-2 rounded-lg border hover:shadow-sm transition-shadow duration-300",
+                            invalidMarks || isNameInvalid ? "border-red-500/50 bg-red-50/50 dark:bg-red-950/20" : "border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-300 dark:hover:border-neutral-700"
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-mono text-neutral-400 w-4">{i + 1}.</span>
+                            <Input 
+                              placeholder={placeholderText}
+                              value={sub.name} 
+                              onChange={(e) => updateSubject(sub.id, "name", e.target.value.replace(/[^a-zA-Z\s.-]/g, ""))}
+                              onBlur={() => handleBlur(`sub_name_${sub.id}`)}
+                              className={cn("bg-transparent border-none shadow-none h-8 px-1 focus-visible:ring-0 text-sm font-medium p-0", isNameInvalid && "placeholder:text-red-400")}
+                            />
+                          </div>
+                          <Input 
+                            type="number" min={1} 
+                            value={sub.maxMarks || ""} 
+                            onChange={(e) => updateSubject(sub.id, "maxMarks", Math.max(1, parseInt(e.target.value) || 0))}
+                            className="bg-neutral-50 dark:bg-neutral-950/50 border-neutral-200 dark:border-neutral-800 shadow-none h-8 focus-visible:ring-neutral-900 text-sm text-center"
+                          />
+                          <Input 
+                            type="number" min={0} max={sub.maxMarks} 
+                            value={sub.marksObtained || ""} 
+                            onBlur={() => handleBlur(`sub_marks_${sub.id}`)}
+                            className={cn("bg-neutral-50 dark:bg-neutral-950/50 border-neutral-200 dark:border-neutral-800 shadow-none h-8 focus-visible:ring-neutral-900 text-sm text-center font-medium", invalidMarks && "text-red-600 border-red-300")}
+                            onChange={(e) => updateSubject(sub.id, "marksObtained", Math.max(0, parseInt(e.target.value) || 0))}
+                          />
+                          <div className="flex justify-center">
+                            {pass === null ? (
+                              <span className="text-xs text-neutral-300">—</span>
+                            ) : pass ? (
+                              <span className="text-[10px] uppercase tracking-wider font-bold text-green-600 bg-green-100 dark:bg-green-900/40 px-2 py-0.5 rounded-full flex items-center gap-1">Pass</span>
+                            ) : (
+                              <span className="text-[10px] uppercase tracking-wider font-bold text-red-600 bg-red-100 dark:bg-red-900/40 px-2 py-0.5 rounded-full flex items-center gap-1">Fail</span>
+                            )}
+                          </div>
+                          <Button 
+                            size="icon" variant="ghost" 
+                            onClick={() => removeSubject(sub.id)} 
+                            className="h-8 w-8 text-neutral-400 hover:text-red-600 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        {invalidMarks && <p className="text-[10px] text-red-500 font-medium pl-8 animate-in fade-in">Marks obtained cannot exceed max marks</p>}
+                        {isNameInvalid && <p className="text-[10px] text-red-500 font-medium pl-8 animate-in fade-in">Subject name is required</p>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sidebar / Live Summary - Takes up 4 cols on large screens */}
+          <div className="lg:col-span-4 sticky top-24 space-y-6">
+            <Card className="shadow-lg border-neutral-200/60 dark:border-neutral-800 rounded-2xl bg-white/80 backdrop-blur-xl dark:bg-neutral-900/80 overflow-hidden transition-all duration-500">
+              <div className={cn(
+                "h-2 w-full",
+                status === "Pass" || status === "Distinction" ? "bg-green-500" : status === "Fail" ? "bg-red-500" : "bg-neutral-200 dark:bg-neutral-800"
+              )} />
+              
+              <CardHeader className="pb-4">
+                <CardTitle className="text-sm font-semibold tracking-widest text-neutral-500 uppercase flex flex-col gap-2">
+                  Live Snapshot
+                </CardTitle>
+              </CardHeader>
+              
+              <CardContent className="space-y-8">
+                <div className="flex flex-col gap-1">
+                  <span className="text-4xl font-light tracking-tight text-neutral-900 dark:text-white">
+                    {percentage.toFixed(1)}<span className="text-2xl text-neutral-400">%</span>
+                  </span>
+                  <span className="text-sm text-neutral-500">Aggregate Score</span>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-neutral-500">Total Marks</span>
+                    <span className="font-semibold text-neutral-900 dark:text-white">{totalObtained} <span className="text-neutral-400 font-normal">/ {totalMax}</span></span>
+                  </div>
+                  <Progress value={percentage || 0} className={cn("h-1.5", status === 'Fail' ? '[&>div]:bg-red-500' : '[&>div]:bg-neutral-900 dark:[&>div]:bg-white')} />
+                </div>
+
+                <div className="flex justify-between items-center py-4 border-t border-neutral-100 dark:border-neutral-800">
+                  <span className="text-sm text-neutral-500">Verdict</span>
+                  {status ? (
+                    <span className={cn(
+                      "text-sm font-semibold tracking-wide",
+                      (status === "Pass" || status === "Distinction") ? "text-green-600" : "text-red-600"
+                    )}>
+                      {status.toUpperCase()}
+                    </span>
+                  ) : (
+                    <span className="text-sm text-neutral-300">PENDING</span>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Button 
+              size="lg" 
+              disabled={!isFormValid} 
+              onClick={handleGenerate}
+              className="w-full rounded-2xl bg-neutral-900 hover:bg-neutral-800 text-white shadow-xl shadow-neutral-900/20 dark:shadow-white/10 h-14 font-semibold tracking-wide transition-all data-[disabled]:opacity-50 data-[disabled]:shadow-none hover:-translate-y-0.5"
+            >
+              Generate Result Document
+              <Sparkles className="h-4 w-4 ml-2 opacity-50" />
+            </Button>
+            
+            <p className="text-xs text-center text-neutral-400 font-medium">
+              {!isFormValid ? "Fill in all required fields correctly to unlock" : "PDF formatting is automatically applied"}
+            </p>
+          </div>
+        </div>
       </main>
     </div>
   );

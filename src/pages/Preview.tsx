@@ -1,6 +1,8 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
-import { ArrowLeft, Download, Save, GraduationCap, CheckCircle, Award } from "lucide-react";
+import { ArrowLeft, Download, Save, GraduationCap, CheckCircle, Award, Mail } from "lucide-react";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, PieChart, Pie, Cell, LineChart, Line } from "recharts";
+import { useEffect, useState } from "react";
+import { getSubmissions, emailPdf } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -10,12 +12,14 @@ import { saveResult, saveResultRemote } from "@/lib/storage";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { generatePDF } from "@/lib/pdf-generator";
+import EmailModal from "@/components/EmailModal";
 
 const Preview = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
   const result = location.state as ResultData | undefined;
 
   if (!result) {
@@ -28,6 +32,43 @@ const Preview = () => {
   const status = getResultStatus(percentage, subjects);
   const totalObtained = subjects.reduce((s, sub) => s + sub.marksObtained, 0);
   const totalMax = subjects.reduce((s, sub) => s + sub.maxMarks, 0);
+
+  const chartData = subjects.map((s) => ({
+    name: s.name,
+    obtained: s.marksObtained,
+    max: s.maxMarks,
+  }));
+
+  // Student-level additional charts data
+  const [studentHistory, setStudentHistory] = useState<any[]>([]);
+  useEffect(() => {
+    (async () => {
+      try {
+        const q = student.rollNumber || student.registrationNumber || student.name;
+        if (!q) return;
+        const rows = await getSubmissions({ q: String(q), limit: 500 });
+        setStudentHistory(rows || []);
+      } catch (e) {
+        // ignore
+      }
+    })();
+  }, [student]);
+
+  const totalObtainedForPie = totalObtained || 1;
+  const pieData = subjects.map((s) => ({ name: s.name, value: Number(((s.marksObtained / totalObtainedForPie) * 100).toFixed(2)) }));
+
+  // Semester trend: compute average percentage per semester from studentHistory
+  const semesterMap: Record<string, { sum: number; count: number }> = {};
+  for (const sub of studentHistory) {
+    const sem = (sub.student && (sub.student.semester || sub.student.semester === 0)) ? String(sub.student.semester) : String(sub.data?.student?.semester || "0");
+    const perc = sub.subjects ? Number(calculatePercentage(sub.subjects)) : 0;
+    if (!semesterMap[sem]) semesterMap[sem] = { sum: 0, count: 0 };
+    semesterMap[sem].sum += perc;
+    semesterMap[sem].count += 1;
+  }
+  const semesterTrend = Object.keys(semesterMap)
+    .map((k) => ({ semester: k, avg: Number((semesterMap[k].sum / semesterMap[k].count).toFixed(2)) }))
+    .sort((a, b) => Number(a.semester) - Number(b.semester));
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -56,12 +97,75 @@ const Preview = () => {
     }
   };
 
-  const handleDownload = () => {
-    generatePDF(result);
+  const handleDownload = async () => {
+    try {
+      await generatePDF(result);
+    } catch (e) {
+      console.error("PDF generation failed", e);
+    }
+  };
+
+  const handleEmail = () => {
+    setEmailModalOpen(true);
+  };
+
+  /** Called by EmailModal with the confirmed address */
+  const handleSendEmail = async (toEmail: string): Promise<void> => {
+    // Prefer server-side email-now endpoint (no DB save required)
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    const token = localStorage.getItem("auth_token");
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+
+    const resp = await fetch(`${import.meta.env.VITE_API_URL || ''}/email-now`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        result,
+        email: toEmail,
+        subject: `Your Result — ${student.name} | Semester ${student.semester}`,
+      }),
+    });
+
+    if (resp.ok) {
+      return; // success — modal will show the success state
+    }
+
+    // Server failed — attempt client-side PDF upload fallback
+    let serverErr = '';
+    try {
+      const errJson = await resp.json();
+      serverErr = errJson?.error || errJson?.hint || JSON.stringify(errJson);
+    } catch {
+      serverErr = `HTTP ${resp.status}`;
+    }
+
+    // Try client generate + upload fallback
+    try {
+      const blob = await generatePDF(result, { download: false });
+      if (blob) {
+        const file = blob instanceof File
+          ? blob
+          : new File([blob], `${student.name.replace(/\s+/g, "_")}_Sem${student.semester}_Result.pdf`, { type: "application/pdf" });
+        const uploadResp = await emailPdf(file, toEmail, `Result - ${student.name}`);
+        if (uploadResp?.ok) return;
+        serverErr = uploadResp?.data?.error || uploadResp?.data?.hint || serverErr;
+      }
+    } catch (fallbackErr) {
+      // ignore fallback errors, throw original
+    }
+
+    throw new Error(serverErr || 'Server returned an error. Check backend logs.');
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-purple-950">
+      <EmailModal
+        open={emailModalOpen}
+        onClose={() => setEmailModalOpen(false)}
+        defaultEmail={student.email || ""}
+        studentName={student.name}
+        onSend={handleSendEmail}
+      />
       {/* Enhanced Header */}
       <header className="sticky top-0 z-20 border-b border-white/20 glass backdrop-blur-xl">
         <div className="max-w-5xl mx-auto px-4 py-5 flex items-center justify-between gap-4">
@@ -91,6 +195,13 @@ const Preview = () => {
                   <Save className="h-4 w-4" /> Save
                 </>
               )}
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleEmail}
+              className="gap-2 rounded-xl btn-enhanced-secondary text-sm hover:shadow-lg hover:-translate-y-0.5"
+            >
+              <Mail className="h-4 w-4" /> Email
             </Button>
             <Button 
               size="sm" 
@@ -188,6 +299,58 @@ const Preview = () => {
                     </TableRow>
                   </TableBody>
                 </Table>
+              </div>
+            </div>
+
+            {/* Per-student Chart: Subject vs Marks */}
+            <div className="p-8 border-t border-border/30">
+              <h3 className="text-lg font-bold mb-3">Subject-wise Marks</h3>
+              <div style={{ width: "100%", height: 260 }}>
+                <ResponsiveContainer>
+                  <BarChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="obtained" fill="#4F46E5" name="Obtained" />
+                    <Bar dataKey="max" fill="#06B6D4" name="Max" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Small charts: Pie (subject % distribution) and Semester trend (line) */}
+            <div className="p-8 border-t border-border/30 grid gap-6 md:grid-cols-2">
+              <div>
+                <h4 className="font-bold mb-3">Subject Percentage Distribution</h4>
+                <div style={{ width: "100%", height: 220 }}>
+                  <ResponsiveContainer>
+                    <PieChart>
+                      <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} label>
+                        {pieData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={["#4F46E5", "#06B6D4", "#F97316", "#10B981", "#EF4444", "#8B5CF6"][index % 6]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-bold mb-3">Semester Performance (History)</h4>
+                <div style={{ width: "100%", height: 220 }}>
+                  <ResponsiveContainer>
+                    <LineChart data={semesterTrend} margin={{ top: 10, right: 20, left: 0, bottom: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="semester" />
+                      <YAxis />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="avg" stroke="#8B5CF6" strokeWidth={2} dot={{ r: 3 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             </div>
 

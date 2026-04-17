@@ -4,16 +4,27 @@ import { ArrowLeft, Trash2, Eye, GraduationCap, FileX, Sparkles } from "lucide-r
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ResultData } from "@/types/result";
-import { getSavedResults, deleteResult } from "@/lib/storage";
+import { getSavedResults, deleteResult, getSubmissions } from "@/lib/storage";
 import { calculatePercentage, getResultStatus, getStatusColor } from "@/lib/result-utils";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 
 const HistoryPage = () => {
   const navigate = useNavigate();
   const [results, setResults] = useState<ResultData[]>([]);
+  const [remoteResults, setRemoteResults] = useState<ResultData[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     setResults(getSavedResults());
+    (async () => {
+      try {
+        const remote = await getSubmissions({ limit: 200, user_only: true });
+        setRemoteResults(remote || []);
+      } catch (e) {
+        // ignore
+      }
+    })();
   }, []);
 
   const handleDelete = (id: string) => {
@@ -21,11 +32,26 @@ const HistoryPage = () => {
     setResults(getSavedResults());
   };
 
+  const combined = [...results, ...remoteResults];
+  const totalCount = combined.length;
+
+  const matchesSearch = (r: ResultData) => {
+    const q = searchTerm.trim().toLowerCase();
+    if (!q) return true;
+    const s = r.student || (r as any).data?.student || {};
+    return (
+      (s.name || "").toLowerCase().includes(q) ||
+      (s.rollNumber || "").toLowerCase().includes(q) ||
+      (s.courseName || "").toLowerCase().includes(q) ||
+      String(s.semester || "").toLowerCase().includes(q)
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-purple-950">
       {/* Enhanced Header */}
       <header className="sticky top-0 z-20 border-b border-white/20 glass backdrop-blur-xl">
-        <div className="max-w-5xl mx-auto px-4 py-5 flex items-center gap-4">
+          <div className="max-w-5xl mx-auto px-4 py-5 flex items-center gap-4">
           <Button 
             variant="outline" 
             size="sm" 
@@ -36,12 +62,15 @@ const HistoryPage = () => {
           </Button>
           <div>
             <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">📋 Saved Results</h1>
-            <p className="text-xs text-muted-foreground font-medium">{results.length} result{results.length !== 1 ? 's' : ''} saved</p>
+            <p className="text-xs text-muted-foreground font-medium">{totalCount} result{totalCount !== 1 ? 's' : ''} saved</p>
           </div>
         </div>
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-10 animate-slideUp">
+        <div className="max-w-5xl mx-auto px-4 pb-6">
+          <Input placeholder="Search by name, roll, course, or semester" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+        </div>
         {results.length === 0 ? (
           <div className="card-enhanced p-12 text-center space-y-6">
             <div className="h-24 w-24 rounded-full icon-wrapper-primary mx-auto">
@@ -62,7 +91,7 @@ const HistoryPage = () => {
           </div>
         ) : (
           <div className="grid gap-4">
-            {results.map((result, idx) => {
+            {combined.filter(matchesSearch).map((result, idx) => {
               const pct = calculatePercentage(result.subjects);
               const status = getResultStatus(pct, result.subjects);
               const createdDate = new Date(result.createdAt);
